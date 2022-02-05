@@ -1,36 +1,38 @@
 package com.example.tcomtest
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.telecom.Connection
 import android.telecom.DisconnectCause
+import android.util.Log
 import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
-import java.lang.Exception
+import androidx.appcompat.app.AppCompatActivity
+import com.example.tcomtest.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private val serviceConnection = CallServiceConnection()
     private var connection: TComConnection? = null
     private val tcomManager: TComManager by lazy { TComManager(applicationContext) }
-    private val requiredPermissions =
-        arrayOf(
-            android.Manifest.permission.READ_PHONE_STATE,
-            android.Manifest.permission.READ_CALL_LOG
-        )
+    private lateinit var binding: ActivityMainBinding
+    private val requiredPermissions = if (Build.VERSION.SDK_INT >= 31) arrayOf(
+        Manifest.permission.READ_PHONE_NUMBERS
+    ) else arrayOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        drop_btn.setOnClickListener { closeConnection() }
+        binding.dropBtn.setOnClickListener { closeConnection() }
 
-        answer_btn.setOnClickListener {
+        binding.activateBtn.setOnClickListener {
             val conn = connection
             if (conn != null) {
                 conn.setActive()
@@ -39,39 +41,58 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        incoming_btn.setOnClickListener {
+        binding.incomingBtn.setOnClickListener {
             if (!hasPermissions()) {
                 requestPermissions(requiredPermissions, 1)
-                Toast.makeText(applicationContext, "don't have permissions", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "don't have permissions", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
             try {
+                connection?.let {
+                    closeConnection()
+                }
+
                 if (tcomManager.registerAccount()) {
                     tcomManager.addIncomingCall()
                 } else {
-                    Toast.makeText(applicationContext, "account isn't registered", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        applicationContext,
+                        "account isn't registered",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
             }
         }
 
-        outgoing_btn.setOnClickListener {
+        binding.outgoingBtn.setOnClickListener {
             if (!hasPermissions()) {
                 requestPermissions(requiredPermissions, 1)
-                Toast.makeText(applicationContext, "don't have permissions", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "don't have permissions", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
             try {
+                connection?.let {
+                    closeConnection()
+                }
+
                 if (tcomManager.registerAccount()) {
                     tcomManager.addOutgoingCall()
                 } else {
-                    Toast.makeText(applicationContext, "account isn't registered", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        applicationContext,
+                        "account isn't registered",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "failed to create an outgoing call - ${e.message}")
             }
         }
     }
@@ -106,17 +127,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         val stateText = "state: no call"
-        state_label.text = stateText
+        binding.stateLabel.text = stateText
     }
 
     private fun addConnection(newConnection: TComConnection) {
         newConnection.listener = {
             val stateText = "state: ${Connection.stateToString(it)}"
-            state_label.text = stateText
+            binding.stateLabel.text = stateText
         }
         connection = newConnection
         val stateText = "state: ${Connection.stateToString(newConnection.state)}"
-        state_label.text = stateText
+        binding.stateLabel.text = stateText
     }
 
 
@@ -132,5 +153,9 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceDisconnected(name: ComponentName?) {
             callService?.connectionListener = {}
         }
+    }
+
+    companion object {
+        const val TAG = "MainActivity"
     }
 }

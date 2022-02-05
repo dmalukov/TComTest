@@ -26,7 +26,11 @@ class TComService : ConnectionService() {
         Log.i(TAG, "onCreateIncomingConnection - handle=$phoneAccount, request=$request")
 
         val connection = TComConnection(applicationContext)
-        bindService(Intent(applicationContext, CallService::class.java), CallServiceConnection(connection), 0)
+        bindService(
+            Intent(applicationContext, CallService::class.java),
+            CallServiceConnection(connection),
+            0
+        )
         return connection
     }
 
@@ -43,11 +47,16 @@ class TComService : ConnectionService() {
     ): Connection {
         Log.i(TAG, "onCreateOutgoingConnection - handle=$handle, request=$request")
         val connection = TComConnection(applicationContext)
-        bindService(Intent(applicationContext, CallService::class.java), CallServiceConnection(connection), 0)
+        bindService(
+            Intent(applicationContext, CallService::class.java),
+            CallServiceConnection(connection),
+            0
+        )
         return connection
     }
 
-    inner class CallServiceConnection(private val tcomConnection: TComConnection) : ServiceConnection {
+    inner class CallServiceConnection(private val tcomConnection: TComConnection) :
+        ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             val callSrvBinder = binder as CallService.CallServiceBinder
             callSrvBinder.getCallService().addConnection(tcomConnection)

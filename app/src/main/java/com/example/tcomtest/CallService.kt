@@ -9,7 +9,7 @@ import android.os.IBinder
 class CallService : Service() {
     var connectionListener: (TComConnection) -> Unit = {}
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(intent: Intent?): IBinder {
         return CallServiceBinder()
     }
 

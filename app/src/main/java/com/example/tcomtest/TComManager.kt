@@ -1,5 +1,6 @@
 package com.example.tcomtest
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
@@ -38,6 +39,7 @@ class TComManager(private val context: Context) {
         tm.addNewIncomingCall(getAccountHandle(), extras)
     }
 
+    @SuppressLint("MissingPermission")  // CALL_PHONE is not required for self-managed ConnectionService
     fun addOutgoingCall() {
         val extras = Bundle()
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, getAccountHandle())
